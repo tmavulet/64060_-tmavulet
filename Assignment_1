@@ -1,0 +1,13 @@
+USArrests
+DF=USArrests
+mean(DF$Murder)
+mean(DF$Rape)
+sd(DF$Assault)
+sd(DF$UrbanPop)
+var(DF$Murder)
+var(DF$Rape)
+max(DF$Murder)
+min(DF$Murder)
+DF$Assault_ztransformed=(DF$Assault-mean(DF$Assault))/sd(DF$Assault)
+View(DF)
+plot(DF$Assault)
