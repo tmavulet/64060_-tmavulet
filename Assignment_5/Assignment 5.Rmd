@@ -1,0 +1,160 @@
+---
+title: "Assignment 5"
+author: "Tejasvini Mavuleti"
+date: "4/13/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+getwd()
+setwd("C:/Users/mavul/OneDrive/Documents")
+```
+
+```{r}
+# installing required packages
+library(ISLR)
+library(caret)
+library(dplyr)
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(ggplot2)
+library(proxy)
+library(NbClust)
+library(ppclust)
+library(dendextend)
+```
+
+```{r}
+# Importing the "cereal" data set 
+cereals <- read.csv("C:/Users/mavul/Downloads/Cereals.csv")
+# Review
+# Reviewing first few rows of the data set
+head(cereals)
+# Analyse the structure 
+str(cereals)
+# Analyse the summary 
+summary(cereals)
+```
+
+Scaling and removing N/A from the data set
+```{r}
+# Creating a duplicate of data set for pre processing
+cereal_scaled <- cereals
+# Scaling the data set before placing it into a clusters
+cereal_scaled[ , c(4:16)] <- scale(cereals[ , c(4:16)])
+# Removing NA values from data set
+cereal_preprocessed <- na.omit(cereal_scaled)
+# Review the scaled data set 
+head(cereal_preprocessed)
+```
+The total number of observations now are 74.
+
+# 1) Applying hierarchical clustering to the data using Euclidean distance to the normalized measurements 
+
+Using Agnes to compare the clustering from  single linkage, complete linkage, average linkage, and Ward
+
+# Single Linkage:
+```{r}
+# Creating the dissimilarity matrix
+cereal_d_euclidean <- dist(cereal_preprocessed[ , c(4:16)], method = "euclidean")
+# Performing hierarchical clustering using the single linkage method
+ag_hc_single <- agnes(cereal_d_euclidean, method = "single")
+# Ploting the results of the all the methods
+plot(ag_hc_single, 
+     main = "Customer Cereal Ratings - AGNES - Single Linkage Method",
+     xlab = "Cereal",
+     ylab = "Height",
+     cex.axis = 1,
+     cex = 0.55)
+```
+
+# Complete Linkage:
+```{r}
+# Creating hierarchical clustering using the complete linkage method
+ag_hc_complete <- agnes(cereal_d_euclidean, method = "complete")
+# Ploting the results of the different methods
+plot(ag_hc_complete, 
+     main = "Customer Cereal Ratings - AGNES - Complete Linkage Method",
+     xlab = "Cereal",
+     ylab = "Height",
+     cex.axis = 1,
+     cex = 0.55)
+```
+
+# Average Linkage:
+```{r}
+# Creating hierarchical clustering via the average linkage method
+ag_hc_average <- agnes(cereal_d_euclidean, method = "average")
+# Ploting the results of the different methods
+plot(ag_hc_average, 
+     main = "Customer Cereal Ratings - AGNES - Average Linkage Method",
+     xlab = "Cereal",
+     ylab = "Height",
+     cex.axis = 1,
+     cex = 0.55)
+```
+
+# Ward Method:
+```{r}
+# Creating hierarchical clustering via the ward linkage method
+ag_hc_ward <- agnes(cereal_d_euclidean, method = "ward")
+# Ploting the results of the different methods
+plot(ag_hc_ward, 
+     main = "Customer Cereal Ratings - AGNES - Ward Linkage Method",
+     xlab = "Cereal",
+     ylab = "Height",
+     cex.axis = 1,
+     cex = 0.55)
+```
+The best clustering method would be based on the agglomerative coefficient that is returned from each method. The closer the value is to 1.0, the closer the clustering structure is. Therefore, we choose the value closest to 1.0.
+
+Single Linkage: 0.61
+Complete Linkage: 0.84
+Average Linkage: 0.78
+Ward Method: 0.90
+
+Therefore, we choose the Ward method as the best clustering model.
+
+# 2) How many clusters would you choose? 
+
+```{r}
+# Determine the optimal number of clusters for the dataset via the Elbow method
+fviz_nbclust(cereal_preprocessed[ , c(4:16)], hcut, method = "wss", k.max = 25) +
+  labs(title = "Number of Clusters - Elbow Method") +
+  geom_vline(xintercept = 12, linetype = 2)
+```
+
+# Silhouette Method:
+```{r}
+# Determine the optimal number of clusters for the dataset via the silhouette method
+fviz_nbclust(cereal_preprocessed[ , c(4:16)], 
+                               hcut, 
+                               method = "silhouette", 
+                               k.max = 25) +
+  labs(title = "Number of Clusters - Silhouette Method")
+```
+
+The number of clusters are 12
+
+Making an outline of the 12 clusters on the hierarchical tree
+
+```{r}
+# Plot of the Ward hierarchical tree with the 12 clusters outlined for reference
+plot(ag_hc_ward, 
+     main = "AGNES - Ward Linkage Method - 12 Clusters Outlined",
+     xlab = "Cereal",
+     ylab = "Height",
+     cex.axis = 1,
+     cex = 0.55,)
+rect.hclust(ag_hc_ward, k = 12, border = 1:12)
+```
+
+# 3) The elementary public schools would like to choose a set of cereals to include in their daily cafeterias. Every day a different cereal is offered, but all cereals should support a healthy diet. For this goal, you are requested to find a cluster of healthy cereals.Should the data be normalized? If not, how should they be used in the cluster analysis? 
+
+a) In this case, normalizing the data is not suitable because the nutritional information for cereal is normalized based on the sample of cereal being evaluated. As a result, the data has cereals with extremely high sugar content and very little fiber, iron, and other nutritional data. 
+Therefore, we can not determine how much nourishment the cereal will provide a child once it is normalized throughout the sample set. We may infer that cereal with an iron content of 0.99, which is it contains all of the nutritional iron a child needs but could be the best out of the sample set, having nearly no nutritional value.
+
+b) As a result, a better way to preprocess the data would be to convert it to a ratio of daily recommended calories, fiber, carbohydrates, and other nutrients for a child. 
+This allows the analysts to make more precise decisions on clusters preventing larger variables from overriding the distance estimates. An analyst may look at the cluster average to see what percentage of a student's daily needed nutrition would come from a particular cereal. This would enable the employees to make better selections about healthy cereal clusters.
+
